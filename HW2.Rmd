@@ -36,7 +36,7 @@ params:
 
 # 1 實證應用
 Execute the following code lines to import fertil2 data frame. 
-```{r}
+```{r data1}
 library(readr)
 fertil2 <- read_csv("https://raw.githubusercontent.com/tpemartin/github-data/master/fertil2.csv")
 ```
@@ -48,28 +48,99 @@ Estimate the model:
 $$children=\beta_{0}+\beta_{1}educ+\beta_{2}age+\beta_{3}age^{2}+u$$
 by OLS, and interpret the estimates.
 
+```{r ans11}
+library(readr)
+library(dplyr)
+library(lmtest)
+library(AER)
+library(magrittr)
+library(sandwich)
+library(stargazer)
+
+fertil2%>%
+lm(children ~ educ+age+agesq,data=.)-> ols1
+summary(ols1)
+```
+由此結果可知
+(1)母親的教育年限越高，所生的小孩個數越少，教育年限多一年，小孩出生個數減少0.09個。
+(2)隨著母親年齡增加1歲，小孩出生個數增加0.33個
+(3)隨著母親年齡越來越高，小孩出生個數減少的幅度會越來越大
+
 ## 1.2
 The variable frsthalf is a dummy variable equal to one if the woman was born during the first six months of the year. Assuming that frsthalf is uncorrelated with the error term from 1.1, show that frsthalf is a reasonable IV candidate for educ. (Hint: you need to do a regression.)
 
+
+```{r ans12}
+fertil2%>%
+lm(educ ~ frsthalf+age+agesq,data=.)-> ols2
+summary(ols2)
+```
+成為工具變數須具備下列兩個條件:
+(1)frsthalf與erroe term獨立(由題目假設可知)
+(2)frsthalf與educ有關(由回歸結果可知兩者互為高度負相關)
 ## 1.3
 Estimate the model from part 1.1 by using frsthalf as an IV for educ. Compare the estimated effect of education with the OLS estiimate from 1.1.
 
+
+```{r ans13}
+tsls_1iv<-ivreg(
+  children~educ+age+agesq|age+agesq+frsthalf,
+  data=fertil2)
+  summary(tsls_1iv)
+```
+加入了frsthalf當工具變數，可知道與1.1題相比，educ的係數由-0.09變為-0.17，幾乎為兩倍大
 ## 1.4
 Add the binary variables electric, tv, and bicycle to the model and assume that these are exogenous. Estimate the equation by OLS and TSLS and compare the estimated coefficients on educ. Interpret the coefficient on tv and explain why television ownership has a negative effect on fertility.
+
+```{r ans14}
+fertil2%>%
+lm(children~educ+age+agesq+electric+tv+bicycle,data=.)-> ols3
+summary(ols3)
+
+tsls_2iv<-ivreg(
+  children~educ+age+agesq+electric+tv+bicycle|age+agesq+electric+tv+bicycle+frsthalf,
+  data=fertil2)
+  summary(tsls_2iv)
+```
+由結果可知，electric和tv兩變數有巨大影響。
+電視對於生育率有負向效果，可能於原因為有了電視，大多數父母花在看電視的時間增加了，而減少了彼此的親密關係；也有可能看電視而帶來很多社會的隱憂而導致不想生小孩。
 
 ## 1.5 
 Continue from 1.4, conduct Hausman test to see if OLS is valid for the study under a 5 percent test size.
 
+
+```{r ans15}
+summary(tsls_2iv, vcov = sandwich, diagnostics = TRUE, df=Inf)
+```
+在顯著水準為0.05之下，Hausman的p-value檢定值為0.164，因此可知結果為不顯著，表示可用ols做檢定有效。
+
 ## 1.6
 Can we test whether frsthalf is indeed exogenous for being an IV? why or why not?
+
+由於這裡的工具變數與解釋變數相等，卡方分配的自由度為0，而無法做檢定
 
 ## 1.7
 If we add one more IV catholic, can we test IV exogeneity? If yes, what is the test result under a 5 percent test size.
 
+
+```{r ans17}
+tsls_3iv<-ivreg(
+  children~educ+age+agesq+electric+tv+bicycle|age+agesq+electric+tv+bicycle+frsthalf+catholic,
+  data=fertil2)
+  summary(tsls_3iv)
+  
+summary(tsls_3iv, vcov = sandwich, diagnostics = TRUE, df=Inf)  
+```
+可以做檢定，由於這裡的工具變數大於解釋變數的個數，而自由度不會為0。
+由Sargan的p-value檢定值可知，在顯著水準為0.05之下，顯著不拒絕虛無假設，表示工具變數沒有滿足排除條件
 ## 1.8
 Are frsthalf and catholic weak IVs?
 
 
+```{r ans18}
+summary(tsls_3iv, vcov = sandwich, diagnostics = TRUE, df=Inf) 
+```
+由Weak instruments的p-value值可知，顯著拒絕虛無假設，因此工具變數具有強關聯性
 
 # 2 複迴歸與工具變數
 
@@ -94,6 +165,11 @@ $$Y=Y_{-p}+\beta^* P$$
   【A.1】P與立足點中的兩部份，$\tilde{\epsilon}$及$rincome$，皆無關。
 
 說明此時$E(Y|P)$中P的係數即為$\beta^*$.
+ANS:
+$$E(Y|P)=E(Y_{-p}+\beta^* P|P)=E(Y_{-p}|P)+\beta^* P$$
+$$=E(\tilde{\epsilon}+E(Y_{-p}|rincome)|P)+\beta^*P$$
+$$=2+3rincome+\beta^*P$$
+此時$E(Y|P)$中P的係數即為$\beta^*$
 
 ## 2.2 立足點情境A.2
 
@@ -106,6 +182,16 @@ $$Y=Y_{-p}+\beta^* P$$
 即P與$Y_{-p}$有關連，但此關連性來自於【A.2.2】中P與rincome的關連——即$E(rincome|P)$部份。
 
 說明此時$E(Y|P)$中P的係數「不」為$\beta^*$，但$E(Y|P,rincome)$中P的係數為$\beta^*$。
+ANS:
+(1)
+$$E(Y|P)=E(Y_{-p}+\beta^* P|P)=E(\tilde{\epsilon}+2+3rincome|P)+\beta^* P$$
+$$=2+3E(rincome|P)+\beta^*P=3.5+(3+\beta^*)P$$
+此時$E(Y|P)$中P的係數「不」為$\beta^*$
+
+(2)
+$$E(Y|P,rincome)=E(Y_{-p}+\beta^* P|P,rincome=E(\tilde{\epsilon}+\beta^*P+E(Y_{-p}|rincome)|P,rincome)$$
+$$=\beta^*P+2+3rincome$$
+此時$E(Y|P,rincome)$中P的係數為$\beta^*$。
 
 ## 2.3 立足點情境A.3
 
@@ -119,6 +205,16 @@ $$Y=Y_{-p}+\beta^* P$$
 
 若$E(\tilde{\epsilon}|P)=0.5+2P$，說明不論使用$E(Y|P)$或$E(Y|P,rincome)$，其P之係數都不會是$\beta^*$
 
+ANS:
+(1)
+$$E(Y|P)=E(Y_{-p}+\beta^*P|P)=E(\tilde{\epsilon}+2+3rincome|P)+\beta^*P$$
+$$=E(\tilde{\epsilon}|P)+2+3E(income|P)+\beta^*P$$
+$$0.5+2P+2+1.5+3P+\beta^*P=4+(5+\beta^*)P$$
+(2)
+$$E(Y|P,rincome)=E(\tilde{\epsilon}+\beta^*P+E(Y_{-p}|rincome)|P,rincome)$$
+$$=E(\tilde{\epsilon}|P,rincome)+\beta^*P+2+3rincome$$
+$$=2.5+3rincome+(2+\beta^*)P$$
+由此可知，不論使用$E(Y|P)$或$E(Y|P,rincome)$，其P之係數都不會是$\beta^*$
 ## 2.4 立足點情境A.3+效應情境B.1：TSLS
 
 考慮以下三個情境條件：
@@ -133,6 +229,12 @@ $$Y=Y_{-p}+\beta^* P$$
 
 若$E(\tilde{\epsilon}|P)=0.5+2P$，說明使用$E(Y|P_z,rincome)$其中$P_z$的係數會是$\beta^*$
 
+ANS:
+$$Y=\beta_0+\beta_1rincome+\tilde{\epsilon}+\beta^*P$$
+$$=\beta_0+\beta_1rincome+\tilde{\epsilon}+\beta^*E(P|z)+\beta^*(P-E(P|z))$$
+$$=\tilde{\epsilon}'+\beta_0+\beta_1rincome+\beta^*P_z$$
+$$E(Y|P_z,rincome)=\beta^*P_z+\beta_0+\beta_1rincome$$
+其中$P_z$的係數是$\beta^*$
 ## 2.5 立足點情境A.3+效應情境B.1：複迴歸
 
 承接上題情境，即
@@ -145,6 +247,16 @@ $$Y=Y_{-p}+\beta^* P$$
   
 說明使用$E(Y|P,rincome,z)$其中$P$的係
 數不會是$\beta^*$.
+
+ANS:
+$$let \ P_z=\alpha_0+\alpha_1z $$
+$$P=(P-P_z)+P_z=\tilde{v}+\alpha_0+\alpha_1z,$$
+$$we\ have \quad z=\frac{P-\alpha_0-\tilde{v}}{\alpha_1}$$
+$$Y=\tilde{\epsilon}+\beta^*P+\beta_0+\beta_1rincome+\beta_2z$$
+$$=\tilde{\epsilon}+\beta^*P+\beta_0+\beta_1rincome+\beta_2\frac{P-\alpha_0-\tilde{v}}{\alpha_1}$$
+$$=(\tilde{\epsilon}-\frac{\beta_2}{\alpha_1}\tilde{v})+(\beta^*+\frac{\beta_2}{\alpha_1})P+\beta_0-\frac{\beta_2}{\alpha_1}\alpha_0+\beta_1rincome$$
+$$E(Y|P,rincome,z)=\beta_0-\frac{\beta_2}{\alpha_1}\alpha_0+\beta_1rincome+(\beta^*+\frac{\beta_2}{\alpha_1})P$$
+其中$P$的係數不是$\beta^*$。
 
 # 3. 替代變數
 
@@ -164,10 +276,28 @@ $$y_i=\beta^* x_i+\gamma w_i+y_{-x,-w,i}$$
 $$\tilde{x}_i=x_i+\epsilon_i.$$
 請問效應解釋變數使用替代變數下，$\tilde{x}_i$的OLS估計式還有一致性嗎？（驗證$E(y_i|\tilde{x}_i,w_i)$中$\tilde{x_i}$的係數是否為$\beta^*$）要有一致性會需要什麼額外條件嗎？
 
+ANS:
+$$E(y_i|\tilde{x_i},w_i)=\beta^*\tilde{x_i}-\beta^*E(\epsilon_i|\tilde{x_i},w_i)+\gamma w_i+y_{-x,-w,i}$$
+$$let \epsilon_i=\alpha_0+\alpha_1\tilde{x_i}+\alpha_2w_i $$
+$$=\beta^*\tilde{x_i}-\beta^*(\alpha_0+\alpha_1\tilde{x_i}+\alpha_2w_i)+\gamma w_i+y_{-x,-w,i}$$
+$$=\beta^*(1-\alpha_1)\tilde{x_i}-\beta^*\alpha_0+(\gamma-\beta^*\alpha_2)w_i+y_{-x,-w,i}$$
+其中$\tilde{x_i}$的係數並非$\beta^*$
+
+若要滿足一致性估計，則$E(\epsilon_i|\tilde{x_i},w_i)=0$
 ## 3.2
 
 若我們沒有真正的$w_i$資料而改成使用它的替代變數$\tilde{w}_i$進行複迴歸，且令
 $$\tilde{w}_i=w_i+\epsilon_i.$$
 請問控制變數使用替代變數下，$x_i$的OLS估計式還有一致性嗎？（驗證$E(y_i|x_i,\tilde{w}_i)$中$x_i$的係數是否為$\beta^*$）要有一致性會需要什麼額外條件嗎？
 
+ANS:
+$$E(y_i|x_i,\tilde{w_i})=\beta^*x_i+\gamma\tilde{w_i}-\gamma E(\epsilon_i|x_i,\tilde{w_i})+y_{-x,-w,i}$$
+$$let \epsilon_i=\delta_0+\delta_1x_i+\delta_2\tilde{w_i}$$
 
+$$=\beta^*x_i+\gamma\tilde{w_i}-\gamma(\delta_0+\delta_1x_i+\delta_2\tilde{w_i})+y_{-x,-w,i}$$
+
+$$=(\beta^*-\gamma\delta_1)x_i-\gamma\delta_0+\gamma(1-\delta_2)\tilde{w_i}+y_{-x,-w,i}$$
+
+其中$\tilde{x_i}$的係數並非$\beta^*$
+
+若要滿足一致性估計，則$E(\epsilon_i|x_i,\tilde{w_i})=0$
