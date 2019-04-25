@@ -36,7 +36,7 @@ params:
 
 # 1 實證應用
 Execute the following code lines to import fertil2 data frame. 
-```{r}
+```{r data1}
 library(readr)
 fertil2 <- read_csv("https://raw.githubusercontent.com/tpemartin/github-data/master/fertil2.csv")
 ```
@@ -48,17 +48,42 @@ Estimate the model:
 $$children=\beta_{0}+\beta_{1}educ+\beta_{2}age+\beta_{3}age^{2}+u$$
 by OLS, and interpret the estimates.
 
+```{r ans11}
+
+```
+
+
 ## 1.2
 The variable frsthalf is a dummy variable equal to one if the woman was born during the first six months of the year. Assuming that frsthalf is uncorrelated with the error term from 1.1, show that frsthalf is a reasonable IV candidate for educ. (Hint: you need to do a regression.)
+
+
+```{r ans12}
+
+```
 
 ## 1.3
 Estimate the model from part 1.1 by using frsthalf as an IV for educ. Compare the estimated effect of education with the OLS estiimate from 1.1.
 
+
+```{r ans13}
+
+```
+
 ## 1.4
 Add the binary variables electric, tv, and bicycle to the model and assume that these are exogenous. Estimate the equation by OLS and TSLS and compare the estimated coefficients on educ. Interpret the coefficient on tv and explain why television ownership has a negative effect on fertility.
 
+```{r ans14}
+
+```
+
+
 ## 1.5 
 Continue from 1.4, conduct Hausman test to see if OLS is valid for the study under a 5 percent test size.
+
+
+```{r ans15}
+
+```
 
 ## 1.6
 Can we test whether frsthalf is indeed exogenous for being an IV? why or why not?
@@ -66,10 +91,18 @@ Can we test whether frsthalf is indeed exogenous for being an IV? why or why not
 ## 1.7
 If we add one more IV catholic, can we test IV exogeneity? If yes, what is the test result under a 5 percent test size.
 
+
+```{r ans17}
+
+```
+
 ## 1.8
 Are frsthalf and catholic weak IVs?
 
 
+```{r ans18}
+
+```
 
 # 2 複迴歸與工具變數
 
