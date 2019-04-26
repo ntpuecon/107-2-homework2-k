@@ -82,12 +82,12 @@ weakTest_table
 Estimate the model from part 1.1 by using frsthalf as an IV for educ. Compare the estimated effect of education with the OLS estiimate from 1.1.
 
 Ans：educ的係數在OLS中為-0.091、在TSLS中為-0.171，表示當女性受教育年數每增加一年，平均生小孩數下降更多。
-```{r ans13, results='asis'}
+```{r ans13}
 tsls1 <- ivreg(
   children ~ educ+ age+ age2|age+ age2+ frsthalf,
   data=fertil2
   )
-stargazer(model1, tsls1, type="html")
+summary(tsls1)
 ```
 
 ## 1.4
