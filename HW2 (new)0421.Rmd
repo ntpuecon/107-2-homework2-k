@@ -193,7 +193,7 @@ $$=2+3E(rincome|P)+\beta^*P=3.5+(3+\beta^*)P$$
 此時$E(Y|P)$中P的係數「不」為$\beta^*$。
 
 <說明2>
-$$E(Y|P,rincome)=E(Y_{-p}+\beta^* P|P,rincome=E(\tilde{\epsilon}+\beta^*P+E(Y_{-p}|rincome)|P,rincome)$$
+$$E(Y|P,rincome)=E(Y_{-p}+\beta^* P|P,rincome)=E(\tilde{\epsilon}+\beta^*P+E(Y_{-p}|rincome)|P,rincome)$$
 $$=\beta^*P+2+3rincome$$
 此時$E(Y|P,rincome)$中P的係數為$\beta^*$。
 
